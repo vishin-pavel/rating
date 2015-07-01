@@ -1,0 +1,15 @@
+{
+  "name": "vishin-pavel/little-rating",
+  "description": "Маленькая голосовалка",
+  "minimum-stability": "stable",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "Vishin Pavel",
+      "email": "it.vishin@gmail.com"
+    }
+  ],
+  "require": {
+    "slim/slim": "2.6.2"
+  }
+}
