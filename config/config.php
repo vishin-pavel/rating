@@ -8,6 +8,6 @@
 return [
     'token'=>'foSFuf9SF832sDdOIf34mjn',
     'database'=>[
-        'dbname'=>'../database/rating.sqlite'
+        'dbname'=>'../database/rating.data.sqlite'
     ]
 ];
