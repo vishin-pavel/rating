@@ -25,7 +25,10 @@ function getAllFromDB($db, $sql, array $driverOptions = []){
     return $request;
 }
 
-$app->get('/rating/:id', function($poll_id)use($app, $db){
+/**
+ * Получить результаты одного голосования
+ */
+$app->get('/poll/:id', function($poll_id)use($app, $db){
     $select = $db->prepare("
                             SELECT
                               date_start,
@@ -46,6 +49,9 @@ $app->get('/rating/:id', function($poll_id)use($app, $db){
     return true;
 });
 
+/**
+ * Получить список всех голосований
+ */
 $app->get('/poll/list', function()use($app, $db){
     $select = $db->prepare(' SELECT * FROM poll');
     $select -> execute();
@@ -56,6 +62,9 @@ $app->get('/poll/list', function()use($app, $db){
     return true;
 });
 
+/**
+ * Получить результаты всех голосований
+ */
 $app->get('/rating/list', function()use($app, $db){
     $select = $db->prepare("
                             SELECT
@@ -81,6 +90,9 @@ $app->get('/rating/list', function()use($app, $db){
     return true;
 });
 
+/**
+ * Получить список участников
+ */
 $app->get('/person/', function()use($app, $db){
     $select = $db->prepare('SELECT * FROM person');
     $select -> execute();
@@ -89,7 +101,37 @@ $app->get('/person/', function()use($app, $db){
     $app->response()->setBody(json_encode($select->fetchAll(PDO::FETCH_ASSOC)));
 });
 
+/**
+ * Добавить пользователя
+ */
+$app->post('/person/', function()use($app, $db){
+    $data = json_decode($app->request->getBody(), true);
+    $insert = $db->prepare('INSERT INTO person (login, name) VALUES (:login, :name)');
+    $insert->execute([':login'=>$data['login'], ':name'=>$data['name']]);
 
+    $app->response()->setStatus('200');
+    $app->response()->header('Content-Type', 'application/json');
+    $app->response()->setBody(json_encode([
+        'id' => $db->lastInsertId(),
+        'login'=>$data['login'],
+        'name'=>$data['name']
+    ]));
+    return true;
+});
+
+/**
+ * Удалить пользователя
+ */
+$app->delete('/person/:id', function($id)use($app, $db){
+    $delete = $db->prepare('DELETE FROM person where id=:id');
+    $delete->execute([':id'=>$id]);
+
+    $app->response()->setStatus('204');
+});
+
+/**
+ * Проголосовать
+ */
 $app->post('/vote/', function()use($app, $db){
     $data = json_decode($app->request->getBody(), true);
     if($data['token']!=$app->config('token')){
@@ -128,11 +170,7 @@ $app->post('/vote/', function()use($app, $db){
     $app->response()->setBody(json_encode(['success'=>'Голоса приняты']));
     return true;
 });
-try {
-    $app->run();
-}
-catch (Exception $e){
-    $app->response()->setStatus('500');
-    $app->response()->header('Content-Type', 'application/json');
-    $app->response()->setBody(json_encode(['error'=>'Ошибка: Что-то пошло не так']));
-}
+/**
+ * Запуск приложения
+ */
+$app->run();
