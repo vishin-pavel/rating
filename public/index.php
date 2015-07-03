@@ -28,6 +28,27 @@ function getAllFromDB($db, $sql, array $driverOptions = []){
 /**
  * Получить результаты одного голосования
  */
+$app->get('/poll/last', function()use($app, $db){
+    $select = $db->prepare("
+                            SELECT
+                              name,
+                              SUM(rating) AS rating
+                            FROM poll
+                            LEFT JOIN vote ON poll.id = vote.poll_id
+                            LEFT JOIN  person ON person.id = vote.person_id
+                            WHERE poll.id = (SELECT p.id FROM poll AS p ORDER BY id DESC LIMIT 1)
+                            GROUP BY person_id, poll_id
+                  ");
+    $rating = $select->fetchAll(PDO::FETCH_ASSOC);
+    $app->response()->setStatus('200');
+    $app->response()->header('Content-Type', 'application/json');
+    $app->response()->setBody(json_encode($rating));
+    return true;
+});
+
+/**
+ * Получить результаты одного голосования
+ */
 $app->get('/poll/:id', function($poll_id)use($app, $db){
     $select = $db->prepare("
                             SELECT
@@ -47,6 +68,16 @@ $app->get('/poll/:id', function($poll_id)use($app, $db){
     $app->response()->header('Content-Type', 'application/json');
     $app->response()->setBody(json_encode($rating));
     return true;
+});
+
+/**
+ * Получить текущую дату с сервера
+ */
+$app->get('/date/', function()use($app, $db){
+    $date = new DateTime('NOW');
+    $app->response()->setStatus('200');
+    $app->response()->header('Content-Type', 'application/json');
+    $app->response()->setBody(json_encode($date->getTimestamp()));
 });
 
 /**
@@ -146,6 +177,12 @@ $app->post('/vote/', function()use($app, $db){
         $date_start = new DateTime("last Monday");
         $insert = $db->prepare("INSERT INTO poll ('date_start', 'date_end') VALUES (:date_start, :date_end)");
         $result = $insert->execute([':date_start'=>$date_start->getTimestamp(), ':date_end'=>$date_end->getTimestamp()]);
+        if($insert->errorCode()>0){
+            $app->response()->setStatus('200');
+            $app->response()->header('Content-Type', 'application/json');
+            $app->response()->setBody($insert->errorInfo());
+            return true;
+        }
         $pollID = $db->lastInsertId();
     }
 
