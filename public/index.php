@@ -134,12 +134,6 @@ $app->delete('/person/:id', function($id)use($app, $db){
  */
 $app->post('/vote/', function()use($app, $db){
     $data = json_decode($app->request->getBody(), true);
-    if($data['token']!=$app->config('token')){
-        $app->response()->setStatus('400');
-        $app->response()->header('Content-Type', 'application/json');
-        $app->response()->setBody(json_encode(['error'=>'Bad Token']));
-        return true;
-    }
     $now = time();
     $pollID = $db->prepare('SELECT *
                                 FROM poll
@@ -155,7 +149,7 @@ $app->post('/vote/', function()use($app, $db){
         $pollID = $db->lastInsertId();
     }
 
-    foreach($data['vote'] as $person){
+    foreach($data as $person){
         $insert = $db->prepare("INSERT INTO Vote VALUES (:voter_id, :person_id, :poll_id, :rating)");
         $insert->execute([
             ':voter_id' => $person['voter_id'],
