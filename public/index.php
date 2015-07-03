@@ -177,12 +177,6 @@ $app->post('/vote/', function()use($app, $db){
         $date_start = new DateTime("last Monday");
         $insert = $db->prepare("INSERT INTO poll ('date_start', 'date_end') VALUES (:date_start, :date_end)");
         $result = $insert->execute([':date_start'=>$date_start->getTimestamp(), ':date_end'=>$date_end->getTimestamp()]);
-        if($insert->errorCode()>0){
-            $app->response()->setStatus('200');
-            $app->response()->header('Content-Type', 'application/json');
-            $app->response()->setBody($insert->errorInfo());
-            return true;
-        }
         $pollID = $db->lastInsertId();
     }
 
